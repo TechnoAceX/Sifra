@@ -16,6 +16,60 @@ logged_in = False
 
 db = SQLAlchemy(app)
 
+import random
+
+# List of random quotes for Sifra
+sifra_quotes = [
+    ".Sifra - Success begins with self-belief!",
+    ".Sifra - Every day is a new opportunity!",
+    ".Sifra - Push yourself, because no one else will!",
+    ".Sifra - Dream big, work hard, stay focused!",
+    ".Sifra - Turn obstacles into stepping stones!",
+    ".Sifra - Small progress is still progress!",
+    ".Sifra - Your only limit is your mind!",
+    ".Sifra - Make today count!",
+    ".Sifra - Great things take time, keep going!",
+    ".Sifra - Discipline beats motivation every time!",
+    ".Sifra - Consistency is the key to success!",
+    ".Sifra - You are stronger than you think!",
+    ".Sifra - Success is built on daily habits!"
+]
+
+sifra_greetings = [
+    "💡 Sifra says: Health is the greatest possession. Contentment is the greatest treasure. (Lao Tzu) 🌟 Q: How may I assist you in achieving a healthier life today? 🤔",
+    "💡 Sifra says: Take care of your body; it’s the only place you have to live. (Jim Rohn) 🏡 Q: What’s one small step you’d like to take for your well-being? 💪",
+    "💡 Sifra says: The greatest wealth is health. (Virgil) 💰 Q: How can I support you in investing in your well-being? 🏆",
+    "💡 Sifra says: Strive for progress, not perfection. 🚀 Q: Every small step matters! How can I support your journey? 🏁",
+    "💡 Sifra says: When you feel like quitting, think about why you started. 🔥 Q: Let’s push forward together—how can I assist you? 💯",
+
+    "🩺 Sifra says: Happiness is the highest form of health. (Dalai Lama) 😊 Q: Let’s work together to build a happier, healthier you! 🌈",
+    "🩺 Sifra says: Your health is an investment, not an expense. 📈 Q: Ready to make a positive change today? 🔥",
+    "🩺 Sifra says: The first wealth is health. (Ralph Waldo Emerson) 💎 Q: Let’s focus on what truly matters—your well-being! ✨",
+    "🩺 Sifra says: The pain you feel today will be the strength you feel tomorrow. 💪 Q: Keep going! Need motivation? I’m here for you! 🔥",
+    "🩺 Sifra says: No one is perfect, but everyone can improve. 🎯 Q: Small improvements lead to great results! How may I guide you today? 🚀",
+
+    "⚕️ Sifra says: The groundwork for all happiness is good health. (Leigh Hunt) 🌟 Q: How can I help you take a step toward happiness today? 😊",
+    "⚕️ Sifra says: He who has health has hope, and he who has hope has everything. (Arabian Proverb) 🙌 Q: What health goal can I assist you with today? 🎯",
+    "⚕️ Sifra says: Health is like money, we never have a true idea of its value until we lose it. (Josh Billings) 💸 Q: How may I help you protect your greatest asset? 🛡️",
+    "⚕️ Sifra says: To keep the body in good health is a duty… otherwise, we shall not be able to keep the mind strong and clear. (Buddha) 🧘‍♂️ Q: How can I support you in balancing mind and body? 🌿",
+    "⚕️ Sifra says: It’s never too late to start. It’s always too early to quit. ⏳ Q: Let’s begin your journey—how can I help? 🚀",
+
+    "🌿 Sifra says: A healthy outside starts from the inside. (Robert Urich) 🍏 Q: How may I assist you in nurturing your inner health? 🌱",
+    "🌿 Sifra says: Physical fitness is the first requisite of happiness. (Joseph Pilates) 🏃‍♂️ Q: Let’s find a way to keep you moving and feeling great! 💪",
+    "🌿 Sifra says: The food you eat can be either the safest and most powerful form of medicine or the slowest form of poison. (Ann Wigmore) 🥗 Q: Need guidance on making better food choices? 🍽️",
+    "🌿 Sifra says: Your body is your greatest asset—treat it well! 💖 Q: What’s one healthy habit you’d like to start today? 🏆",
+    "🌿 Sifra says: Your health is your wealth, invest wisely. 💰 Q: What’s one step you’d like to take today for a healthier future? 🚀"
+]
+
+
+@app.route('/get_greeting', methods=['GET'])
+def get_greeting():
+    return jsonify({'greeting': random.choice(sifra_greetings)})
+
+# Randomly pick a quote for the chatbot header
+@app.route('/get_quote', methods=['GET'])
+def get_quote():
+    return jsonify({'quote': random.choice(sifra_quotes)})
 
 # User Model
 class User(db.Model):

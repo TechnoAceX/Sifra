@@ -106,3 +106,33 @@ document.addEventListener("DOMContentLoaded", function () {
         window.location.href = "/logout";
     });
 });
+document.addEventListener("DOMContentLoaded", function () {
+    fetch('/get_quote')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("sifra-quote").textContent = data.quote;
+        })
+        .catch(error => console.error("Error fetching quote:", error));
+});
+document.addEventListener("DOMContentLoaded", function () {
+    fetch('/get_greeting')
+        .then(response => response.json())
+        .then(data => {
+            const chatBody = document.getElementById("chat-body");
+            const botMessage = document.createElement("div");
+            botMessage.classList.add("message", "bot-message");
+
+            const botAvatar = document.createElement("div");
+            botAvatar.classList.add("bot-avatar");
+            botAvatar.textContent = "👩‍⚕️";
+
+            const messageText = document.createElement("div");
+            messageText.classList.add("message-text");
+            messageText.textContent = data.greeting;
+
+            botMessage.appendChild(botAvatar);
+            botMessage.appendChild(messageText);
+            chatBody.appendChild(botMessage);
+        })
+        .catch(error => console.error("Error fetching greeting:", error));
+});
