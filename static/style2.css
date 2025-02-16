@@ -6,28 +6,74 @@
   box-sizing: border-box;
   font-family: "Inter", sans-serif;
 }
+
 body {
   width: 100%;
   min-height: 100vh;
   background: linear-gradient(#EEEEFF, #C8C7FF);
 }
+
+/* Upload Container */
+.upload-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 25px;
+  background: #f4f4f4;
+  border-radius: 25px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #ddd;
+}
+
+.upload-container:hover {
+  background: #e0e0ff;
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Upload Icon */
+.upload-icon {
+  background: #6c63ff;
+  color: white;
+  padding: 10px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+/* File Name */
+#file-name {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+/* Logout Button */
 #logout-btn {
-    position: fixed;  /* Fix it to a specific position */
-    bottom: 20px;     /* Push it towards the bottom */
-    right: 20px;      /* Push it towards the right */
-    background-color: #6236ff; /* Same blue color */
-    color: white;
-    border: none;
-    border-radius: 50%; /* Makes it circular */
-    width: 50px;  /* Set width */
-    height: 50px; /* Set height */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow for better UI */
-    transition: background 0.3s ease, transform 0.2s ease;
+  position: fixed; /* Fix it to a specific position */
+  bottom: 20px; /* Push it towards the bottom */
+  right: 20px; /* Push it towards the right */
+  background-color: #6236ff; /* Button color */
+  color: white;
+  border: none;
+  border-radius: 50%; /* Makes it circular */
+  width: 50px; /* Set width */
+  height: 50px; /* Set height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow for better UI */
+  transition: background 0.3s ease, transform 0.2s ease;
 }
 
 #logout-btn:hover {
