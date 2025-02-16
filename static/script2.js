@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (sender === "bot") {
         const botAvatar = document.createElement("div");
         botAvatar.classList.add("bot-avatar");
-        botAvatar.textContent = "🤖";
+        botAvatar.textContent = "👩‍⚕️";
         messageDiv.appendChild(botAvatar);
     }
 
