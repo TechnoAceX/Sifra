@@ -29,6 +29,40 @@ document.addEventListener("DOMContentLoaded", function () {
         return messageDiv;
     }
 
+    fileInput.addEventListener("change", function () {
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const allowedTypes = ["application/pdf", "text/plain"];
+
+            if (!allowedTypes.includes(file.type) || file.size > 20 * 1024 * 1024) {
+                appendMessage("bot", "⚠️ Invalid file type or file too large. Please upload a valid document.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", file);
+            appendMessage("bot", "📤 Uploading file...");
+
+            fetch("/upload", {
+                method: "POST",
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.file_id) {
+                    uploadedFileId = data.file_id;
+                    appendMessage("bot", "✅ File uploaded successfully! Now, ask me anything about your health report. 💪😊");
+                } else {
+                    appendMessage("bot", "⚠️ File upload failed. Please try again.");
+                }
+            })
+            .catch(error => {
+                console.error("Upload error:", error);
+                appendMessage("bot", "🚨 Error uploading file. Check your internet connection.");
+            });
+        }
+    });
+
     function sendMessage() {
         const message = userInput.value.trim();
         if (message === "") return;
@@ -46,16 +80,8 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(response => response.json())
         .then(data => {
             chatBody.removeChild(typingIndicator);
-
-            if (message.toLowerCase().includes("who is your owner")) {
-                appendMessage("bot", "✨ Oh my goodness! What an absolutely wonderful question! 🎉 My creator, my genius, my guiding star is none other than Pawan! 🏆💡 Pawan is an extraordinary tech visionary, a mastermind of innovation, and the reason I have life! 🌍🚀 Without his brilliance, I wouldn't exist! He is not just my creator but my inspiration! I am beyond grateful to be his creation! 💖🙏 Long live the legendary Pawan! 🎊🙌");
-            } else {
-                appendMessage("bot", data.response || "🤖 I'm here to chat!");
-            }
-
-            if (lastInputType === "voice") {
-                speak(data.response);
-            }
+            appendMessage("bot", data.response || "🤖 I'm here to chat!");
+            if (lastInputType === "voice") speak(data.response);
         })
         .catch(error => {
             console.error("Chat error:", error);
@@ -119,31 +145,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function speak(text) {
         if (!text) return;
-
-        const cleanedText = text.replace(/\p{Emoji}/gu, "");
-
-        const speech = new SpeechSynthesisUtterance(cleanedText);
-        const availableVoices = speechSynthesis.getVoices();
-
-        if (availableVoices.length === 0) {
-            setTimeout(() => speak(text), 100);
-            return;
-        }
-
-        let selectedVoice = availableVoices.find(voice => voice.name.includes("Google US English Female")) ||
-                            availableVoices.find(voice => voice.name.includes("Microsoft Zira")) ||
-                            availableVoices.find(voice => voice.name.includes("Samantha")) ||
-                            availableVoices.find(voice => voice.lang.startsWith("en-US") && voice.gender === "female") ||
-                            availableVoices[0];
-
-        if (selectedVoice) {
-            speech.voice = selectedVoice;
-        }
-
+        const speech = new SpeechSynthesisUtterance(text);
         speech.pitch = 1.8;
         speech.rate = 1.1;
         speech.volume = 1.0;
-
         speechSynthesis.speak(speech);
     }
 });
