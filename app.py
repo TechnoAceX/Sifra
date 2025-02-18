@@ -6,6 +6,12 @@ import os
 import uuid
 from extract_data import extract_text_from_pdf
 from ai_response import get_response
+import speech_recognition as sr
+import pyttsx3
+import base64
+from pydub import AudioSegment
+import io
+import random
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
@@ -15,8 +21,11 @@ app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024  # 20MB file size limit
 logged_in = False
 
 db = SQLAlchemy(app)
+engine = pyttsx3.init()
 
-import random
+# Create the database
+with app.app_context():
+    db.create_all()
 
 # List of random quotes for Sifra
 sifra_quotes = [
@@ -61,6 +70,58 @@ sifra_greetings = [
     "🌿 Sifra says: Your health is your wealth, invest wisely. 💰 Q: What’s one step you’d like to take today for a healthier future? 🚀"
 ]
 
+def speak(text):
+    engine.say(text)
+    engine.runAndWait()
+
+def recognize_speech():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening...")
+        recognizer.adjust_for_ambient_noise(source)
+        try:
+            audio = recognizer.listen(source, timeout=5)
+            return recognizer.recognize_google(audio)
+        except sr.UnknownValueError:
+            return "Sorry, I couldn't understand that."
+        except sr.RequestError:
+            return "Speech recognition service is unavailable."
+
+@app.route("/recognize_speech", methods=['POST'])
+def recognize_speech_route():
+    try:
+        data = request.get_json()
+        if 'audio_data' not in data:
+            return jsonify({"error": "No audio data provided."}), 400
+
+        audio_data = data['audio_data']
+
+        # Decode the base64 audio data
+        audio_bytes = base64.b64decode(audio_data)
+
+        # Convert the audio bytes into an AudioSegment
+        audio = AudioSegment.from_wav(io.BytesIO(audio_bytes))  # Adjust for the actual audio format
+
+        # Now we can use speech recognition
+        import speech_recognition as sr
+        recognizer = sr.Recognizer()
+        with sr.AudioFile(io.BytesIO(audio_bytes)) as source:
+            audio = recognizer.record(source)  # Listen to the audio
+            user_input = recognizer.recognize_google(audio)  # Recognize speech using Google's API
+            print(f"User said: {user_input}")
+
+            # Process the recognized speech with your AI model
+            response = get_response(text=user_input)
+
+            # Speak the response back
+            speak(response)
+
+            return jsonify({"response": response})
+
+    except Exception as e:
+        print(f"Error in recognize_speech_route: {e}")
+        return jsonify({"error": "Something went wrong with speech recognition."}), 500
+
 
 @app.route('/get_greeting', methods=['GET'])
 def get_greeting():
@@ -85,11 +146,6 @@ class User(db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-
-
-# Create the database
-with app.app_context():
-    db.create_all()
 
 
 # Home Route (Login/Register Page)
@@ -168,6 +224,113 @@ def chat():
     except Exception as e:
         print(f"Error in chat: {e}")
         return jsonify({'error': str(e)}), 500
+
+
+import speech_recognition as sr
+import pyttsx3
+from ai_response import get_response
+import time
+
+# Initialize text-to-speech engine
+engine = pyttsx3.init()
+
+# Set speech rate (speed) and volume (optional, you can adjust this)
+engine.setProperty('rate', 150)  # 150 words per minute (you can change this)
+engine.setProperty('volume', 1)  # Volume range is from 0.0 to 1.0
+
+
+# Function to speak the response
+def speak(text):
+    print("Sifra is speaking: ", text)
+    engine.say(text)
+    engine.runAndWait()
+
+
+# Function to listen for voice input and process it
+def listen_for_voice():
+    recognizer = sr.Recognizer()
+
+    with sr.Microphone() as source:
+        print("Listening for your question...")
+        recognizer.adjust_for_ambient_noise(source)  # Adjust to ambient noise
+        audio = recognizer.listen(source)
+
+        try:
+            query = recognizer.recognize_google(audio)
+            print(f"You said: {query}")
+
+            # Send the recognized text to AI model
+            response = get_response(report="", text=query)
+
+            # Speak the response if it's not empty
+            if response:
+                speak(response)
+                print("Sifra's response: ", response)
+
+        except sr.UnknownValueError:
+            print("Sorry, I did not understand that.")
+            speak("Sorry, I did not understand that.")
+        except sr.RequestError:
+            print("Sorry, I'm having trouble connecting to the speech service.")
+            speak("Sorry, I'm having trouble connecting to the speech service.")
+
+
+# Function to handle text input (for keyboard-based input)
+def handle_text_input(user_input):
+    # Process the text input with the AI model
+    response = get_response(report="", text=user_input)
+
+    # If there is a response, display it as text or speak if required
+    if response:
+        print("Sifra's response: ", response)
+
+    return response
+
+
+# Main function to start listening
+def main():
+    while True:
+        print("Press 'Enter' to type your question or press 'q' to quit.")
+
+        # You can handle text input here if you like
+        user_input = input("Your question: ")
+
+        if user_input.lower() == 'q':
+            break
+
+        # Handle typing input
+        if user_input:
+            response = handle_text_input(user_input)
+
+        # Otherwise, listen for voice input
+        else:
+            listen_for_voice()
+
+        time.sleep(1)
+
+
+@app.route("/voice_chat", methods=['POST'])
+def voice_chat():
+    try:
+        data = request.get_json()
+
+        if not data or 'message' not in data:
+            return jsonify({"error": "No message provided."}), 400
+
+        user_message = data['message']
+        print(f"You said: {user_message}")
+
+        # Get response from AI model (you might pass the report or other parameters here)
+        response = get_response(text=user_message)
+
+        # Speak the response
+        speak(response)
+
+        return jsonify({"response": response})
+
+    except Exception as e:
+        print(f"Error in voice_chat route: {e}")
+        return jsonify({"error": "Something went wrong. Please try again later."}), 500
 
 
 

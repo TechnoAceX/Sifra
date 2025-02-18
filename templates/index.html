@@ -18,15 +18,13 @@
         <div class="chat-header">
             <div class="header-info">
                 <img class="chatbot-logo" src="https://th.bing.com/th/id/OIP.TRS8M5ouGTD3t54TaP89FQHaIx?pid=ImgDet&w=184&h=217&c=7&dpr=1.3" alt="Chatbot Logo" />
-                <h1 class="logo-text" id="sifra-quote">. Sifra - Your guide to a healthier you!</h1>
+                <h1 class="logo-text" id="sifra-quote">Sifra - Your guide to a healthier you!</h1>
             </div>
-            <button id="close-chatbot" class="material-symbols-rounded"></button>
+
         </div>
         <!-- Chatbot Body -->
         <div class="chat-body" id="chat-body">
-            <div class="message bot-message">
-            </div>
-
+            <div class="message bot-message"></div>
         </div>
         <!-- Chatbot Footer -->
         <div class="chat-footer">
@@ -43,6 +41,9 @@
             <!-- Chat Form -->
             <form id="chat-form" class="chat-form">
                 <textarea id="user-input" placeholder="Message..." class="message-input" required></textarea>
+                <button type="button" id="voice-input">
+                    <span class="material-symbols-rounded">mic</span>
+                </button>
                 <button type="submit" id="send-message">
                     <span class="material-symbols-rounded">send</span>
                 </button>
@@ -51,26 +52,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script>
-        function updateResponse(text) {
-            document.getElementById("response-container").innerHTML = marked.parse(text);
-        }
-
-        fetch('/get_response', {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({"report": "Your report here", "text": "Your query here"})
-        })
-        .then(response => response.json())
-        .then(data => updateResponse(data.response));
-
-        // File input event listener
-        document.getElementById("file-input").addEventListener("change", function() {
-            let fileName = this.files.length > 0 ? this.files[0].name : "Upload a file";
-            document.getElementById("file-name").textContent = fileName;
-        });
-    </script>
-
     <script src="{{ url_for('static', filename='script2.js') }}"></script>
 </body>
 </html>

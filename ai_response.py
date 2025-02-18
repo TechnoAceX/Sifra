@@ -2,8 +2,11 @@ from openai import OpenAI
 
 client = OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
 
-
 def get_response(report, text):
+    # If no medical report is provided, use an empty string or a placeholder
+    if not report:
+        report = "No medical report available."
+
     completion = client.chat.completions.create(
         model="lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF",
         messages=[
@@ -49,9 +52,8 @@ def get_response(report, text):
 
     response_text = completion.choices[0].message.content.strip()
 
+    # Remove unnecessary symbols from the response (e.g., **, #)
     response_text = response_text.replace("**", "")
-
-    # Remove heading markers (#, ##, ###) by replacing "# " at the start of lines
     lines = response_text.split("\n")
     cleaned_lines = [line.lstrip("#").strip() for line in lines]
     response_text = "\n".join(cleaned_lines)
@@ -60,6 +62,3 @@ def get_response(report, text):
     response_text = response_text.replace("\n", "\n\n")
 
     return response_text
-
-
-
