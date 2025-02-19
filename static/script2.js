@@ -5,7 +5,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const fileInput = document.getElementById("file-input");
     const voiceInputButton = document.getElementById("voice-input");
     let uploadedFileId = "";
-    let lastInputType = "text";
 
     function appendMessage(sender, text, isTyping = false) {
         const messageDiv = document.createElement("div");
@@ -29,40 +28,6 @@ document.addEventListener("DOMContentLoaded", function () {
         return messageDiv;
     }
 
-    fileInput.addEventListener("change", function () {
-        if (fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            const allowedTypes = ["application/pdf", "text/plain"];
-
-            if (!allowedTypes.includes(file.type) || file.size > 20 * 1024 * 1024) {
-                appendMessage("bot", "⚠️ Invalid file type or file too large. Please upload a valid document.");
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append("file", file);
-            appendMessage("bot", "📤 Uploading file...");
-
-            fetch("/upload", {
-                method: "POST",
-                body: formData,
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.file_id) {
-                    uploadedFileId = data.file_id;
-                    appendMessage("bot", "✅ File uploaded successfully! Now, ask me anything about your health report. 💪😊");
-                } else {
-                    appendMessage("bot", "⚠️ File upload failed. Please try again.");
-                }
-            })
-            .catch(error => {
-                console.error("Upload error:", error);
-                appendMessage("bot", "🚨 Error uploading file. Check your internet connection.");
-            });
-        }
-    });
-
     function sendMessage() {
         const message = userInput.value.trim();
         if (message === "") return;
@@ -81,7 +46,9 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(data => {
             chatBody.removeChild(typingIndicator);
             appendMessage("bot", data.response || "🤖 I'm here to chat!");
-            if (lastInputType === "voice") speak(data.response);
+
+            // Make Sifra speak in a cute, feminine voice
+            speak(data.response);
         })
         .catch(error => {
             console.error("Chat error:", error);
@@ -92,14 +59,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     chatForm.addEventListener("submit", function (event) {
         event.preventDefault();
-        lastInputType = "text";
         sendMessage();
     });
 
     userInput.addEventListener("keydown", function (event) {
         if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
-            lastInputType = "text";
             sendMessage();
         }
     });
@@ -122,6 +87,7 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .catch(error => console.error("Error fetching greeting:", error));
 
+    // 🎙️ Voice Recognition (Speech-to-Text)
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.lang = "en-US";
     recognition.continuous = false;
@@ -133,7 +99,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     recognition.onresult = function (event) {
         const userMessage = event.results[0][0].transcript;
-        lastInputType = "voice";
         userInput.value = userMessage;
         sendMessage();
     };
@@ -143,12 +108,39 @@ document.addEventListener("DOMContentLoaded", function () {
         appendMessage("bot", "⚠️ I couldn't hear you clearly. Try again!");
     };
 
+    // 🔊 Speech Synthesis (Even Cuter, More Feminine Voice)
     function speak(text) {
         if (!text) return;
-        const speech = new SpeechSynthesisUtterance(text);
-        speech.pitch = 1.8;
-        speech.rate = 1.1;
+
+        // Remove emojis before speaking
+        const cleanedText = text.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "");
+
+        const speech = new SpeechSynthesisUtterance(cleanedText);
+        const availableVoices = speechSynthesis.getVoices();
+
+        if (availableVoices.length === 0) {
+            setTimeout(() => speak(text), 100);
+            return;
+        }
+
+        let selectedVoice = availableVoices.find(voice => voice.name.includes("Google US English Female")) ||
+                            availableVoices.find(voice => voice.name.includes("Microsoft Zira")) ||
+                            availableVoices.find(voice => voice.name.includes("Samantha")) || // iOS cute voice
+                            availableVoices.find(voice => voice.lang.startsWith("en-US") && voice.gender === "female") ||
+                            availableVoices[0];
+
+        if (selectedVoice) {
+            speech.voice = selectedVoice;
+        }
+
+        speech.pitch = 1.8;  // Higher pitch for extra cuteness
+        speech.rate = 1.1;   // Balanced speed for excitement
         speech.volume = 1.0;
+
         speechSynthesis.speak(speech);
     }
+
+    speechSynthesis.onvoiceschanged = () => {
+        speak("Hiii! I'm Sifra! How can I help you today? 💖");
+    };
 });
