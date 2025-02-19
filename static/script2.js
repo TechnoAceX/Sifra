@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const messageText = document.createElement("div");
         messageText.classList.add("message-text");
-        messageText.innerText = isTyping ? "Sifra is thinking... 🤔💭" : text;
+        messageText.innerText = isTyping ? "Sifra is thinking...🤔💭" : text;
 
         if (sender === "bot") {
             const botAvatar = document.createElement("div");
@@ -28,9 +28,8 @@ document.addEventListener("DOMContentLoaded", function () {
         return messageDiv;
     }
 
-    function sendMessage() {
-        const message = userInput.value.trim();
-        if (message === "") return;
+    function sendMessage(message, mode = "text") {
+        if (!message) return;
 
         appendMessage("user", message);
         userInput.value = "";
@@ -40,15 +39,15 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch("/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: message, file_id: uploadedFileId || null }),
+            body: JSON.stringify({ message: message, file_id: uploadedFileId || null, mode: mode }),
         })
         .then(response => response.json())
         .then(data => {
             chatBody.removeChild(typingIndicator);
             appendMessage("bot", data.response || "🤖 I'm here to chat!");
-
-            // Make Sifra speak in a cute, feminine voice
-            speak(data.response);
+            if (mode === "audio") {
+                speak(data.response);
+            }
         })
         .catch(error => {
             console.error("Chat error:", error);
@@ -59,14 +58,45 @@ document.addEventListener("DOMContentLoaded", function () {
 
     chatForm.addEventListener("submit", function (event) {
         event.preventDefault();
-        sendMessage();
+        sendMessage(userInput.value.trim(), "text");
     });
 
     userInput.addEventListener("keydown", function (event) {
         if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
-            sendMessage();
+            sendMessage(userInput.value.trim(), "text");
         }
+    });
+
+    fileInput.addEventListener("change", function () {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        appendMessage("user", `📂 Uploading file: ${file.name}`);
+        const typingIndicator = appendMessage("bot", "", true);
+
+        fetch("/upload", {
+            method: "POST",
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            chatBody.removeChild(typingIndicator);
+            if (data.file_id) {
+                uploadedFileId = data.file_id;
+                appendMessage("bot", "✅ File uploaded successfully! Now you can ask questions about it.");
+            } else {
+                appendMessage("bot", "⚠️ Failed to upload the file.");
+            }
+        })
+        .catch(error => {
+            console.error("File upload error:", error);
+            chatBody.removeChild(typingIndicator);
+            appendMessage("bot", "⚠️ Oops! File upload failed.");
+        });
     });
 
     document.getElementById("logout-btn").addEventListener("click", function () {
@@ -87,7 +117,6 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .catch(error => console.error("Error fetching greeting:", error));
 
-    // 🎙️ Voice Recognition (Speech-to-Text)
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.lang = "en-US";
     recognition.continuous = false;
@@ -99,8 +128,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     recognition.onresult = function (event) {
         const userMessage = event.results[0][0].transcript;
-        userInput.value = userMessage;
-        sendMessage();
+        sendMessage(userMessage, "audio");
     };
 
     recognition.onerror = function (event) {
@@ -108,24 +136,15 @@ document.addEventListener("DOMContentLoaded", function () {
         appendMessage("bot", "⚠️ I couldn't hear you clearly. Try again!");
     };
 
-    // 🔊 Speech Synthesis (Even Cuter, More Feminine Voice)
     function speak(text) {
         if (!text) return;
-
-        // Remove emojis before speaking
         const cleanedText = text.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "");
-
         const speech = new SpeechSynthesisUtterance(cleanedText);
         const availableVoices = speechSynthesis.getVoices();
 
-        if (availableVoices.length === 0) {
-            setTimeout(() => speak(text), 100);
-            return;
-        }
-
         let selectedVoice = availableVoices.find(voice => voice.name.includes("Google US English Female")) ||
                             availableVoices.find(voice => voice.name.includes("Microsoft Zira")) ||
-                            availableVoices.find(voice => voice.name.includes("Samantha")) || // iOS cute voice
+                            availableVoices.find(voice => voice.name.includes("Samantha")) ||
                             availableVoices.find(voice => voice.lang.startsWith("en-US") && voice.gender === "female") ||
                             availableVoices[0];
 
