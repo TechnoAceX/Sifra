@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const messageText = document.createElement("div");
         messageText.classList.add("message-text");
-        messageText.innerText = isTyping ? "Sifra is thinking...🤔💭" : text;
+        messageText.innerText = isTyping ? "Sifra is thinking..." : text;
 
         if (sender === "bot") {
             const botAvatar = document.createElement("div");
