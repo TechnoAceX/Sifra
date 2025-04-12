@@ -10,3 +10,20 @@ sign_in_btn.addEventListener("click", () => {
   container.classList.remove("sign-up-mode");
 });
 
+document.querySelector('form').addEventListener('submit', function (e) {
+    e.preventDefault(); // Prevent default form submission
+
+    let formData = new FormData(this);
+
+    fetch('/login', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            window.location.href = '/index';  // Redirect on success
+        } else {
+            alert('Invalid Credentials');
+        }
+    });
+});

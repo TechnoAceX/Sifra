@@ -28,6 +28,7 @@ document.addEventListener("DOMContentLoaded", function () {
         return messageDiv;
     }
 
+
     function sendMessage(message, mode = "text") {
         if (!message) return;
 
@@ -162,4 +163,22 @@ document.addEventListener("DOMContentLoaded", function () {
     speechSynthesis.onvoiceschanged = () => {
         speak("Hiii! I'm Sifra! How can I help you today? 💖");
     };
+});
+
+document.querySelector('#register-form').addEventListener('submit', function (e) {
+    e.preventDefault(); // Prevent default form submission
+
+    let formData = new FormData(this);
+
+    fetch('/register', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            window.location.href = '/index';  // Redirect on successful registration
+        } else {
+            alert('Registration failed');
+        }
+    });
 });

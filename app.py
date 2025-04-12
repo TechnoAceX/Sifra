@@ -27,6 +27,106 @@ engine = pyttsx3.init()
 with app.app_context():
     db.create_all()
 
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+
+
+users = {}
+
+# Function to send a welcome email
+def send_welcome_email(user_email, username):
+    sender_email = "sifra.care.ai@gmail.com"
+    sender_password = "ydir txqo aavz uwdf"  # Use App Password if using Gmail
+    subject = "Welcome to Sifra!"
+
+    # Email body
+    body = f"""
+    Hi {username},
+
+    Welcome to Sifra! 🎉 We're excited to have you on board.
+
+    Best,
+    Sifra Team
+    """
+
+    # Setup email
+    msg = MIMEMultipart()
+    msg["From"] = sender_email
+    msg["To"] = user_email
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "plain"))
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, user_email, msg.as_string())
+        server.quit()
+        print(f"Welcome email sent to {user_email}")
+    except Exception as e:
+        print(f"Error sending email: {e}")
+
+
+# Signup route
+# Signup route
+@app.route("/register", methods=["POST"])
+def register():
+    username = request.form["username"]
+    email = request.form["email"]
+    password = request.form["password"]
+
+    if email in users:
+        flash("Email already registered. Please log in.", "error")
+        return redirect(url_for("home"))  # Redirect to login if email exists
+
+    # Save user details
+    users[email] = {"username": username, "password": password}
+
+    # ✅ Send welcome email
+    send_welcome_email(email, username)
+
+    # ✅ Set session so user is logged in automatically
+    session['user'] = username
+
+    flash("Signup successful! Welcome, " + username, "success")
+
+    # ✅ Redirect to index.html after signup
+    return redirect(url_for("index"))
+
+
+
+
+@app.route('/signup', methods=['POST'])
+def signup():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        # Store user details securely (replace with actual database logic)
+        users[username] = password
+
+        # ✅ Automatically log in the user
+        session['user'] = username
+        print("Session after signup:", session.get('user'))  # Debugging
+
+        flash("Signup successful! Welcome, " + username, "success")
+        return redirect(url_for('index'))  # ✅ Redirect to index.html
+
+
+
+# Dashboard (protected route)
+@app.route("/dashboard")
+def dashboard():
+    if "user" in session:
+        return f"Welcome, {session['user']}! This is your dashboard."
+    else:
+        flash("Please log in first.", "error")
+        return redirect(url_for("home"))
+
+
 # List of random quotes for Sifra
 sifra_quotes = [
     ".Sifra - Success begins with self-belief!",
@@ -155,6 +255,33 @@ def home():
         return render_template("index.html")
     else:
         return render_template("login.html")
+
+@app.route('/login', methods=['POST'])
+def login():
+    email = request.form.get('email')  # Assuming login is via email
+    password = request.form.get('password')
+
+    # Check if user exists in the database
+    user = User.query.filter_by(email=email).first()
+
+    if user and user.check_password(password):  # Verify password
+        session['user'] = user.username  # Store user session
+        flash("Login successful!", "success")
+        return redirect(url_for('index'))  # Redirect to index.html
+    else:
+        flash("Invalid credentials. Please try again.", "error")
+        return redirect(url_for('home'))  # Redirect back to login page
+
+
+@app.route('/index')
+def index():
+    print("Session before rendering index:", session.get('user'))  # Debugging
+    if 'user' in session:  # Check if user is logged in
+        return render_template('index.html')
+    flash("Please log in first.", "error")
+    return redirect(url_for('home'))  # Redirect to login if not logged in
+
+
 
 
 # Ensure the upload folder exists
@@ -287,6 +414,7 @@ def handle_text_input(user_input):
     return response
 
 
+
 # Main function to start listening
 def main():
     while True:
@@ -331,54 +459,6 @@ def voice_chat():
     except Exception as e:
         print(f"Error in voice_chat route: {e}")
         return jsonify({"error": "Something went wrong. Please try again later."}), 500
-
-
-
-# Login Route
-@app.route("/login", methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get("username")
-        password = request.form.get("password")
-
-        user = User.query.filter_by(username=username).first()
-        if user and user.check_password(password):
-            flash("Login successful!", "success")
-            global logged_in
-            logged_in = True
-            return redirect("/")
-        else:
-            flash("Invalid credentials. Please try again.", "error")
-            return redirect("/")
-    else:
-        return render_template("login.html")
-
-
-@app.route("/register", methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form.get("username")
-        email = request.form.get("email")
-        password = request.form.get("password")
-
-        if User.query.filter_by(username=username).first():
-            flash("Username already taken. Try a different one.", "error")
-            return redirect("/")
-
-        if User.query.filter_by(email=email).first():
-            flash("Email already registered. Try logging in.", "error")
-            return redirect("/")
-
-        new_user = User(username=username, email=email, password=password)
-        db.session.add(new_user)
-        db.session.commit()
-        global logged_in
-        logged_in = True
-
-        flash("Registration successful! Please log in.", "success")
-        return redirect("/")
-    else:
-        return render_template("register.html")
 
 
 # Logout Route

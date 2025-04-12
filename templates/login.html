@@ -15,7 +15,7 @@
         <div class="signin-signup">
 
           <!-- Sign In Form -->
-          <form action="/login" class="sign-in-form" method="POST">
+          <form id="login-form" action="/login" class="sign-in-form" method="POST">
             <h2 class="title">Sign in</h2>
             <div class="input-field">
               <i class="fas fa-user"></i>
@@ -108,6 +108,33 @@
       </div>
     </div>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js') }}">
+
+      document.addEventListener("DOMContentLoaded", () => {
+    const loginForm = document.getElementById("login-form");
+
+    loginForm.addEventListener("submit", function (e) {
+        e.preventDefault(); // Prevent direct form submission
+
+        const formData = new FormData(this);
+
+        fetch('/login', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = '/index';  // Or your correct route
+            } else {
+                alert('Invalid credentials');
+            }
+        })
+        .catch(error => {
+            console.error('Login error:', error);
+        });
+    });
+});
+
+    </script>
   </body>
 </html>
