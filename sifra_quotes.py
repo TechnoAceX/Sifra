@@ -1,19 +1,19 @@
 import random
 
 sifra_quotes = [
-    "Sifra - Success begins with self-belief!",
-    "Sifra - Every day is a new opportunity!",
-    "Sifra - Push yourself, because no one else will!",
-    "Sifra - Dream big, work hard, stay focused!",
-    "Sifra - Turn obstacles into stepping stones!",
-    "Sifra - Small progress is still progress!",
-    "Sifra - Your only limit is your mind!",
-    "Sifra - Make today count!",
-    "Sifra - Great things take time, keep going!",
-    "Sifra - Discipline beats motivation every time!",
-    "Sifra - Consistency is the key to success!",
-    "Sifra - You are stronger than you think!",
-    "Sifra - Success is built on daily habits!"
+    "..Sifra - Success begins with self-belief!",
+    "..Sifra - Every day is a new opportunity!",
+    "..Sifra - Push yourself, because no one else will!",
+    "..Sifra - Dream big, work hard, stay focused!",
+    "..Sifra - Turn obstacles into stepping stones!",
+    "..Sifra - Small progress is still progress!",
+    "..Sifra - Your only limit is your mind!",
+    "..Sifra - Make today count!",
+    "..Sifra - Great things take time, keep going!",
+    "..Sifra - Discipline beats motivation every time!",
+    "..Sifra - Consistency is the key to success!",
+    "..Sifra - You are stronger than you think!",
+    "..Sifra - Success is built on daily habits!"
 ]
 
 sifra_greetings = [

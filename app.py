@@ -1,18 +1,33 @@
-from flask import Flask, request, render_template, redirect, session, flash, jsonify
+# Standard Library Imports
+import os
+import time
+import uuid
+import random
+import re
+import base64
+import io
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+# Third-party Imports
+from flask import Flask, request, render_template, redirect, session, flash, jsonify, url_for
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm.collections import collection
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-import os
-import uuid
-from extract_data import extract_text_from_pdf
-from ai_response import get_response
+from pydub import AudioSegment
 import speech_recognition as sr
 import pyttsx3
-import base64
-from pydub import AudioSegment
-import io
-import random
+from transformers import AutoTokenizer, AutoModel
+import torch
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Custom Imports
+from extract_data import extract_text_from_pdf
+from ai_response import get_response
+from sifra_quotes import sifra_greetings, sifra_quotes
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
@@ -27,13 +42,6 @@ engine = pyttsx3.init()
 # Create the database
 with app.app_context():
     db.create_all()
-
-from flask import Flask, render_template, request, redirect, url_for, session, flash
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-
-
 
 users = {}
 
@@ -72,7 +80,6 @@ def send_welcome_email(user_email, username):
 
 
 # Signup route
-# Signup route
 @app.route("/register", methods=["POST"])
 def register():
     username = request.form["username"]
@@ -98,8 +105,6 @@ def register():
     return redirect(url_for("index"))
 
 
-
-
 @app.route('/signup', methods=['POST'])
 def signup():
     if request.method == 'POST':
@@ -117,7 +122,6 @@ def signup():
         return redirect(url_for('index'))  # ✅ Redirect to index.html
 
 
-
 # Dashboard (protected route)
 @app.route("/dashboard")
 def dashboard():
@@ -128,56 +132,16 @@ def dashboard():
         return redirect(url_for("home"))
 
 
-# List of random quotes for Sifra
-sifra_quotes = [
-    ".Sifra - Success begins with self-belief!",
-    ".Sifra - Every day is a new opportunity!",
-    ".Sifra - Push yourself, because no one else will!",
-    ".Sifra - Dream big, work hard, stay focused!",
-    ".Sifra - Turn obstacles into stepping stones!",
-    ".Sifra - Small progress is still progress!",
-    ".Sifra - Your only limit is your mind!",
-    ".Sifra - Make today count!",
-    ".Sifra - Great things take time, keep going!",
-    ".Sifra - Discipline beats motivation every time!",
-    ".Sifra - Consistency is the key to success!",
-    ".Sifra - You are stronger than you think!",
-    ".Sifra - Success is built on daily habits!"
-]
+# Random quote
+print(random.choice(sifra_quotes))
 
-sifra_greetings = [
-    "💡 Sifra says: Health is the greatest possession. Contentment is the greatest treasure. (Lao Tzu) 🌟 Q: How may I assist you in achieving a healthier life today? 🤔",
-    "💡 Sifra says: Take care of your body; it’s the only place you have to live. (Jim Rohn) 🏡 Q: What’s one small step you’d like to take for your well-being? 💪",
-    "💡 Sifra says: The greatest wealth is health. (Virgil) 💰 Q: How can I support you in investing in your well-being? 🏆",
-    "💡 Sifra says: Strive for progress, not perfection. 🚀 Q: Every small step matters! How can I support your journey? 🏁",
-    "💡 Sifra says: When you feel like quitting, think about why you started. 🔥 Q: Let’s push forward together—how can I assist you? 💯",
-
-    "🩺 Sifra says: Happiness is the highest form of health. (Dalai Lama) 😊 Q: Let’s work together to build a happier, healthier you! 🌈",
-    "🩺 Sifra says: Your health is an investment, not an expense. 📈 Q: Ready to make a positive change today? 🔥",
-    "🩺 Sifra says: The first wealth is health. (Ralph Waldo Emerson) 💎 Q: Let’s focus on what truly matters—your well-being! ✨",
-    "🩺 Sifra says: The pain you feel today will be the strength you feel tomorrow. 💪 Q: Keep going! Need motivation? I’m here for you! 🔥",
-    "🩺 Sifra says: No one is perfect, but everyone can improve. 🎯 Q: Small improvements lead to great results! How may I guide you today? 🚀",
-
-    "⚕️ Sifra says: The groundwork for all happiness is good health. (Leigh Hunt) 🌟 Q: How can I help you take a step toward happiness today? 😊",
-    "⚕️ Sifra says: He who has health has hope, and he who has hope has everything. (Arabian Proverb) 🙌 Q: What health goal can I assist you with today? 🎯",
-    "⚕️ Sifra says: Health is like money, we never have a true idea of its value until we lose it. (Josh Billings) 💸 Q: How may I help you protect your greatest asset? 🛡️",
-    "⚕️ Sifra says: To keep the body in good health is a duty… otherwise, we shall not be able to keep the mind strong and clear. (Buddha) 🧘‍♂️ Q: How can I support you in balancing mind and body? 🌿",
-    "⚕️ Sifra says: It’s never too late to start. It’s always too early to quit. ⏳ Q: Let’s begin your journey—how can I help? 🚀",
-
-    "🌿 Sifra says: A healthy outside starts from the inside. (Robert Urich) 🍏 Q: How may I assist you in nurturing your inner health? 🌱",
-    "🌿 Sifra says: Physical fitness is the first requisite of happiness. (Joseph Pilates) 🏃‍♂️ Q: Let’s find a way to keep you moving and feeling great! 💪",
-    "🌿 Sifra says: The food you eat can be either the safest and most powerful form of medicine or the slowest form of poison. (Ann Wigmore) 🥗 Q: Need guidance on making better food choices? 🍽️",
-    "🌿 Sifra says: Your body is your greatest asset—treat it well! 💖 Q: What’s one healthy habit you’d like to start today? 🏆",
-    "🌿 Sifra says: Your health is your wealth, invest wisely. 💰 Q: What’s one step you’d like to take today for a healthier future? 🚀"
-]
+# Random greeting
+print(random.choice(sifra_greetings))
 
 def speak(text):
     engine.say(text)
     engine.runAndWait()
 
-
-from transformers import AutoTokenizer, AutoModel
-import torch
 
 # Load pre-trained model and tokenizer
 model_name = "sentence-transformers/all-MiniLM-L6-v2"  # You can choose another model
@@ -185,6 +149,7 @@ tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModel.from_pretrained(model_name)
 
 
+#RAG Model
 def get_embedding(text):
     # Tokenize the input text
     inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512)
@@ -197,10 +162,6 @@ def get_embedding(text):
     embeddings = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
 
     return embeddings
-
-
-import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
 
 
 def query_context(question, n_results=3):
@@ -333,8 +294,6 @@ def index():
     return redirect(url_for('home'))  # Redirect to login if not logged in
 
 
-
-
 # Ensure the upload folder exists
 UPLOAD_FOLDER = 'static/files'
 ALLOWED_EXTENSIONS = {'pdf', 'txt', 'docx'}
@@ -404,11 +363,6 @@ def chat():
         return jsonify({'error': str(e)}), 500
 
 
-import speech_recognition as sr
-import pyttsx3
-from ai_response import get_response
-import time
-
 # Initialize text-to-speech engine
 engine = pyttsx3.init()
 
@@ -464,8 +418,6 @@ def handle_text_input(user_input):
 
     return response
 
-
-
 # Main function to start listening
 def main():
     while True:
@@ -486,7 +438,6 @@ def main():
             listen_for_voice()
 
         time.sleep(1)
-
 
 @app.route("/voice_chat", methods=['POST'])
 def voice_chat():
@@ -510,7 +461,6 @@ def voice_chat():
     except Exception as e:
         print(f"Error in voice_chat route: {e}")
         return jsonify({"error": "Something went wrong. Please try again later."}), 500
-        
 
 # Logout Route
 @app.route("/logout")
@@ -525,7 +475,6 @@ def logout():
 
     return redirect("/")
 
-import re
 
 def clean_response(text):
     text = re.sub(r'(<br\s*/?>\s*){3,}', '<br><br>', text)  # Replace 3+ <br> with 2
