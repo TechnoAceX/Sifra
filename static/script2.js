@@ -159,10 +159,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         speechSynthesis.speak(speech);
     }
-
-    speechSynthesis.onvoiceschanged = () => {
-        speak("Hiii! I'm Sifra! How can I help you today? 💖");
-    };
 });
 
 document.querySelector('#register-form').addEventListener('submit', function (e) {
