@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template, redirect, session, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm.collections import collection
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
@@ -173,6 +174,56 @@ sifra_greetings = [
 def speak(text):
     engine.say(text)
     engine.runAndWait()
+
+
+from transformers import AutoTokenizer, AutoModel
+import torch
+
+# Load pre-trained model and tokenizer
+model_name = "sentence-transformers/all-MiniLM-L6-v2"  # You can choose another model
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModel.from_pretrained(model_name)
+
+
+def get_embedding(text):
+    # Tokenize the input text
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512)
+
+    # Forward pass through the model
+    with torch.no_grad():
+        outputs = model(**inputs)
+
+    # Take the mean of token embeddings (you can use different strategies for aggregation)
+    embeddings = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
+
+    return embeddings
+
+
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+
+
+def query_context(question, n_results=3):
+    results = collection.query(
+        query_texts=[question],
+        n_results=10  # Retrieve more documents
+    )
+
+    # Get the embeddings of the query and the retrieved chunks
+    query_embedding = get_embedding(question)
+    chunk_embeddings = [get_embedding(doc) for doc in results['documents']]
+
+    # Compute cosine similarities
+    similarities = cosine_similarity([query_embedding], chunk_embeddings)[0]
+
+    # Rank the results by similarity
+    ranked_chunks = sorted(zip(results['documents'], similarities), key=lambda x: x[1], reverse=True)
+
+    # Select the top 'n_results'
+    top_chunks = [chunk for chunk, _ in ranked_chunks[:n_results]]
+
+    return top_chunks
+
 
 def recognize_speech():
     recognizer = sr.Recognizer()
