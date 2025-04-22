@@ -459,7 +459,7 @@ def voice_chat():
     except Exception as e:
         print(f"Error in voice_chat route: {e}")
         return jsonify({"error": "Something went wrong. Please try again later."}), 500
-
+        
 
 # Logout Route
 @app.route("/logout")

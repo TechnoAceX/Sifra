@@ -1,19 +1,42 @@
-import random
+# Chat with an intelligent assistant in your terminal
+from openai import OpenAI
 
-adventurers = ["Indiana", "Lara", "Dora", "Bear Grylls", "Jack Sparrow"]
-couch_potatoes = ["Homer", "Jerry", "Patrick", "Chandler", "Garfield"]
+# Point to the local server
+client = OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
 
-isPawanAdventurous = True if random.randint(1, 2) == 1 else False
+user_input = input("Enter message: ")
 
-def main_function(is_adventurous):
-    buddy = adventurers.pop(adventurers.index(random.choice(adventurers))) if is_adventurous else couch_potatoes.pop(couch_potatoes.index(random.choice(couch_potatoes)))
-    print(f"Pawan chooses {buddy} as a travel buddy ✈️")
+history = [
+    {"role": "system",
+     "content": "You are an intelligent assistant. You always provide well-reasoned answers that are both correct and helpful."},
+    {"role": "user",
+     "content": user_input},
+]
 
-    extras = adventurers if random.randint(1, 2) == 1 else couch_potatoes
-    no = random.randint(1, len(extras))
-    for i in range(no):
-        name = random.choice(extras)
-        print(f"And {name} tags along for the ride! 🚀")
-        extras.remove(name)
+while True:
+    completion = client.chat.completions.create(
+        model="model-identifier",
+        messages=history,
+        temperature=0.7,
+        stream=True,
+    )
 
-main_function(isPawanAdventurous)
+    new_message = {"role": "assistant", "content": ""}
+
+    for chunk in completion:
+        if chunk.choices[0].delta.content:
+            print(chunk.choices[0].delta.content, end="", flush=True)
+            new_message["content"] += chunk.choices[0].delta.content
+
+    history.append(new_message)
+
+    # Uncomment to see chat history
+    # import json
+    # gray_color = "\033[90m"
+    # reset_color = "\033[0m"
+    # print(f"{gray_color}\n{'-'*20} History dump {'-'*20}\n")
+    # print(json.dumps(history, indent=2))
+    # print(f"\n{'-'*55}\n{reset_color}")
+
+    print()
+    history.append({"role": "user", "content": input("> ")})
