@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sifra - Your Health Assistant</title>
+    <style>
+        /* Importing Google Fonts - Inter */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Inter", sans-serif;
+        }
+
+        body {
+            width: 100%;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #EEEEFF, #C8C7FF);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #voice-input {
+            background: #6C63FF;
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+            margin-right: 10px;
+        }
+
+        #voice-input:hover {
+            background: #3d39ac;
+            transform: scale(1.1);
+        }
+
+        /* Upload Container */
+        .upload-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 25px;
+            background: #f4f4f4;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+
+        .upload-container:hover {
+            background: #e0e0ff;
+            box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .upload-icon {
+            background: #6c63ff;
+            color: white;
+            padding: 8px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            width: 32px;
+            height: 32px;
+        }
+
+        #file-name {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+        }
+
+        #logout-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #6236ff;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        #logout-btn:hover {
+            background-color: #502bd8;
+            transform: scale(1.1);
+        }
+
+        .chatbot-popup {
+            width: 600px;
+            height: 700px;
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 0 128px 0 rgba(0, 0, 0, 0.1), 0 32px 64px -48px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            padding: 15px 22px;
+            background: #6C63FF;
+            justify-content: space-between;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .chat-header .header-info {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chatbot-logo {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: white;
+            padding: 2px;
+        }
+
+        .header-info .logo-text {
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.31rem;
+            letter-spacing: 0.02rem;
+        }
+
+        .chat-body {
+            padding: 25px 22px;
+            gap: 20px;
+            display: flex;
+            height: 460px;
+            overflow-y: auto;
+            flex-direction: column;
+            scrollbar-width: thin;
+            scrollbar-color: #ccccf5 transparent;
+            flex: 1;
+        }
+
+        .chat-body .message {
+            display: flex;
+            gap: 11px;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .chat-body .message .bot-avatar {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: #6C63FF;
+            font-size: 18px;
+        }
+
+        .chat-body .message .message-text {
+            padding: 12px 16px;
+            max-width: 75%;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .chat-body .bot-message .message-text {
+            background: #F2F2FF;
+            border-radius: 13px 13px 13px 3px;
+            color: #333;
+        }
+
+        .chat-body .user-message {
+            flex-direction: row-reverse;
+            align-items: flex-end;
+        }
+
+        .chat-body .user-message .message-text {
+            color: #fff;
+            background: #6C63FF;
+            border-radius: 13px 13px 3px 13px;
+        }
+
+        .thinking-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 15px;
+            align-items: center;
+        }
+
+        .thinking-indicator .dot {
+            height: 8px;
+            width: 8px;
+            border-radius: 50%;
+            background: #6C63FF;
+            animation: dotPulse 1.8s ease-in-out infinite;
+        }
+
+        .thinking-indicator .dot:nth-child(1) { animation-delay: 0s; }
+        .thinking-indicator .dot:nth-child(2) { animation-delay: 0.3s; }
+        .thinking-indicator .dot:nth-child(3) { animation-delay: 0.6s; }
+
+        @keyframes dotPulse {
+            0%, 60%, 100% {
+                transform: scale(1);
+                opacity: 0.7;
+            }
+            30% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        .chat-footer {
+            background: #fff;
+            padding: 15px 22px 20px;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .chat-footer .chat-form {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border-radius: 32px;
+            outline: 1px solid #CCCCE5;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+        }
+
+        .chat-form:focus-within {
+            outline: 2px solid #6C63FF;
+        }
+
+        .chat-form .message-input {
+            width: 100%;
+            height: 47px;
+            outline: none;
+            resize: none;
+            border: none;
+            max-height: 180px;
+            border-radius: inherit;
+            font-size: 0.95rem;
+            padding: 14px 0 12px 18px;
+        }
+
+        .chat-form .chat-controls {
+            gap: 3px;
+            height: 47px;
+            display: flex;
+            padding-right: 6px;
+            align-items: center;
+        }
+
+        .chat-form .chat-controls button {
+            height: 35px;
+            width: 35px;
+            border: none;
+            cursor: pointer;
+            color: #706DB0;
+            border-radius: 50%;
+            font-size: 16px;
+            background: none;
+            transition: 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-form .chat-controls button:hover {
+            color: #3d39ac;
+            background: #f1f1ff;
+        }
+
+        .chat-form .chat-controls #send-message {
+            color: #fff;
+            background: #6C63FF;
+        }
+
+        .chat-form .chat-controls #send-message:hover {
+            background: #3d39ac;
+        }
+
+        .upload-status {
+            background: #e8f5e8;
+            color: #2d5a2d;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 520px) {
+            .chatbot-popup {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+            .chat-header {
+                border-radius: 0;
+            }
+            .chat-footer {
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button id="logout-btn" onclick="alert('Logout functionality would redirect to login page')">
+        🚪
+    </button>
+    
+    <div class="chatbot-popup">
+        <!-- Chatbot Header -->
+        <div class="chat-header">
+            <div class="header-info">
+                <img class="chatbot-logo" src="https://th.bing.com/th/id/OIP.TRS8M5ouGTD3t54TaP89FQHaIx?pid=ImgDet&w=184&h=217&c=7&dpr=1.3" alt="Sifra Logo" />
+                <h1 class="logo-text">Sifra - Your Health Guide</h1>
+            </div>
+        </div>
+        
+        <!-- Chatbot Body -->
+        <div class="chat-body" id="chat-body">
+            <!-- Initial greeting message -->
+            <div class="message bot-message">
+                <div class="bot-avatar">👩‍⚕️</div>
+                <div class="message-text">Hello! I'm Sifra, your personal health assistant. I'm here to help you with health advice, nutrition tips, and wellness guidance. How can I assist you today? 😊</div>
+            </div>
+        </div>
+        
+        <!-- Chatbot Footer -->
+        <div class="chat-footer">
+            <!-- Upload Status -->
+            <div class="upload-status" id="upload-status">
+                ✅ File uploaded successfully! You can now ask questions about it.
+            </div>
+            
+            <!-- Upload Form -->
+            <form class="upload-form">
+                <label for="file-input" class="upload-container">
+                    <div class="upload-icon">
+                        📎
+                    </div>
+                    <span id="file-name">Upload a file</span>
+                </label>
+                <input type="file" id="file-input" style="display: none;" />
+            </form>
+            
+            <!-- Chat Form -->
+            <form id="chat-form" class="chat-form">
+                <textarea id="user-input" placeholder="Ask me about your health..." class="message-input" required></textarea>
+                <div class="chat-controls">
+                    <button type="button" id="voice-input">
+                        🎤
+                    </button>
+                    <button type="submit" id="send-message">
+                        ➤
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Health-related responses for the chatbot
+        const healthResponses = [
+            "Great question! For general wellness, I recommend drinking at least 8 glasses of water daily, eating a balanced diet rich in fruits and vegetables, and getting 7-9 hours of sleep. 🥗💧😴",
+            "That's an important health concern. I suggest consulting with a healthcare professional for personalized advice. In the meantime, maintaining a healthy lifestyle with regular exercise can be beneficial. 🏃‍♀️💪",
+            "According to health guidelines, regular physical activity for at least 30 minutes a day can significantly improve your overall health. Would you like some exercise suggestions? 🏋️‍♀️",
+            "Nutrition plays a crucial role in health! Focus on whole foods, lean proteins, healthy fats, and complex carbohydrates. Limit processed foods and sugar intake. 🥑🐟🥬",
+            "Stress management is vital for good health. Try meditation, deep breathing exercises, yoga, or regular walks in nature. Taking breaks and getting adequate sleep also helps! 🧘‍♀️🌳",
+            "For better sleep hygiene, maintain a consistent sleep schedule, avoid screens before bedtime, keep your room cool and dark, and consider relaxation techniques. 🌙✨",
+            "Mental health is just as important as physical health. Don't hesitate to reach out to mental health professionals if you're feeling overwhelmed. Self-care activities can also help! 🧠💚",
+            "Preventive care is key! Regular check-ups, screenings, vaccinations, and maintaining a healthy lifestyle can help prevent many health issues. 🩺📋",
+            "Hydration is essential! Besides water, you can stay hydrated with herbal teas, fruits with high water content, and avoiding excessive caffeine or alcohol. 💧🍉",
+            "A balanced diet should include a variety of foods from all food groups. Aim for colorful plates with plenty of vegetables, fruits, whole grains, and lean proteins! 🌈🍽️"
+        ];
+
+        const motivationalResponses = [
+            "You're taking great steps towards better health! Keep up the excellent work! 🌟",
+            "Remember, small changes lead to big improvements. You've got this! 💪✨",
+            "Your health journey is unique to you. Be patient and kind to yourself! 🤗💖",
+            "Every healthy choice you make is an investment in your future self! 🎯🌱",
+            "I'm here to support you on your wellness journey. Feel free to ask me anything! 🤝💚"
+        ];
+
+        const exerciseResponses = [
+            "Here are some beginner-friendly exercises: walking, bodyweight squats, push-ups (modified if needed), planks, and stretching. Start slowly and gradually increase intensity! 🏃‍♀️💪",
+            "For cardiovascular health, try activities like brisk walking, swimming, cycling, or dancing. Aim for 150 minutes of moderate activity per week! 💃🚴‍♀️",
+            "Strength training is important too! You can use resistance bands, weights, or your own body weight. Include exercises for all major muscle groups! 🏋️‍♀️",
+            "Don't forget flexibility and balance! Yoga, tai chi, and regular stretching can improve mobility and reduce injury risk. 🧘‍♀️🤸‍♀️"
+        ];
+
+        const nutritionResponses = [
+            "For a healthy breakfast, try oatmeal with berries, Greek yogurt with nuts, or whole grain toast with avocado. Start your day with protein and fiber! 🥣🥑",
+            "Meal prep can help you eat healthier! Prepare balanced meals with lean proteins, vegetables, and whole grains. It saves time and supports your health goals! 🥘📦",
+            "Healthy snacks include nuts, fruits, vegetables with hummus, Greek yogurt, or whole grain crackers. These provide sustained energy! 🥜🍎",
+            "Stay mindful of portion sizes. Use smaller plates, eat slowly, and listen to your hunger cues. Quality over quantity! 🍽️⏰"
+        ];
+
+        // DOM elements
+        const chatBody = document.getElementById("chat-body");
+        const chatForm = document.getElementById("chat-form");
+        const userInput = document.getElementById("user-input");
+        const fileInput = document.getElementById("file-input");
+        const fileName = document.getElementById("file-name");
+        const uploadStatus = document.getElementById("upload-status");
+        const voiceInputButton = document.getElementById("voice-input");
+
+        let isListening = false;
+        let uploadedFile = null;
+
+        // Function to add messages to chat
+        function appendMessage(sender, text, isTyping = false) {
+            const messageDiv = document.createElement("div");
+            messageDiv.classList.add("message", sender === "bot" ? "bot-message" : "user-message");
+
+            if (sender === "bot") {
+                const botAvatar = document.createElement("div");
+                botAvatar.classList.add("bot-avatar");
+                botAvatar.textContent = "👩‍⚕️";
+                messageDiv.appendChild(botAvatar);
+            }
+
+            const messageText = document.createElement("div");
+            messageText.classList.add("message-text");
+            
+            if (isTyping) {
+                messageText.innerHTML = '<div class="thinking-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+            } else {
+                messageText.textContent = text;
+            }
+
+            messageDiv.appendChild(messageText);
+            chatBody.appendChild(messageDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            return messageDiv;
+        }
+
+        // Function to get appropriate response based on user input
+        function getBotResponse(userMessage) {
+            const message = userMessage.toLowerCase();
+            
+            if (message.includes('hello') || message.includes('hi') || message.includes('hey')) {
+                return "Hello! I'm here to help with your health and wellness questions. What would you like to know about? 😊";
+            }
+            
+            if (message.includes('exercise') || message.includes('workout') || message.includes('fitness')) {
+                return exerciseResponses[Math.floor(Math.random() * exerciseResponses.length)];
+            }
+            
+            if (message.includes('diet') || message.includes('nutrition') || message.includes('food') || message.includes('eat')) {
+                return nutritionResponses[Math.floor(Math.random() * nutritionResponses.length)];
+            }
+            
+            if (message.includes('sleep') || message.includes('tired') || message.includes('insomnia')) {
+                return "Good sleep is crucial for health! Try maintaining a regular sleep schedule, avoiding screens before bed, and creating a relaxing bedtime routine. Aim for 7-9 hours nightly! 😴✨";
+            }
+            
+            if (message.includes('stress') || message.includes('anxiety') || message.includes('worried')) {
+                return "Managing stress is important for your wellbeing. Try deep breathing, meditation, regular exercise, or talking to someone you trust. If stress persists, consider professional help! 🧘‍♀️💚";
+            }
+            
+            if (message.includes('water') || message.includes('hydration') || message.includes('drink')) {
+                return "Staying hydrated is essential! Aim for 8-10 glasses of water daily. You can also hydrate with herbal teas and water-rich foods like cucumbers and watermelon! 💧🥒";
+            }
+            
+            if (message.includes('thank') || message.includes('thanks')) {
+                return motivationalResponses[Math.floor(Math.random() * motivationalResponses.length)];
+            }
+            
+            if (message.includes('weight') || message.includes('lose') || message.includes('gain')) {
+                return "For healthy weight management, focus on balanced nutrition, regular physical activity, and sustainable habits. Consult with a healthcare provider for personalized guidance! ⚖️🎯";
+            }
+            
+            // Default health response
+            return healthResponses[Math.floor(Math.random() * healthResponses.length)];
+        }
+
+        // Function to simulate bot typing and response
+        function simulateBotResponse(userMessage) {
+            const typingIndicator = appendMessage("bot", "", true);
+            
+            // Simulate thinking time
+            setTimeout(() => {
+                chatBody.removeChild(typingIndicator);
+                const response = getBotResponse(userMessage);
+                appendMessage("bot", response);
+                
+                // Optional: Add text-to-speech for audio mode
+                if (speechSynthesis) {
+                    const utterance = new SpeechSynthesisUtterance(response.replace(/[^\w\s]/gi, ''));
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1.1;
+                    // speechSynthesis.speak(utterance); // Uncomment to enable
+                }
+            }, Math.random() * 2000 + 1000); // Random delay between 1-3 seconds
+        }
+
+        // Handle form submission
+        chatForm.addEventListener("submit", function(event) {
+            event.preventDefault();
+            const message = userInput.value.trim();
+            
+            if (message) {
+                appendMessage("user", message);
+                userInput.value = "";
+                simulateBotResponse(message);
+            }
+        });
+
+        // Handle Enter key press
+        userInput.addEventListener("keydown", function(event) {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                chatForm.dispatchEvent(new Event('submit'));
+            }
+        });
+
+        // Handle file upload
+        fileInput.addEventListener("change", function() {
+            const file = fileInput.files[0];
+            if (file) {
+                uploadedFile = file;
+                fileName.textContent = file.name;
+                uploadStatus.style.display = "block";
+                
+                appendMessage("user", `📎 Uploaded: ${file.name}`);
+                
+                setTimeout(() => {
+                    appendMessage("bot", "Great! I've received your file. I can help analyze health-related documents, lab reports, or nutrition information. What would you like to know about your uploaded file? 📋✨");
+                }, 1000);
+            }
+        });
+
+        // Handle voice input (mock implementation)
+        voiceInputButton.addEventListener("click", function() {
+            if (!isListening) {
+                isListening = true;
+                voiceInputButton.style.background = "#ff6b6b";
+                voiceInputButton.textContent = "🔴";
+                
+                // Simulate voice recognition
+                setTimeout(() => {
+                    isListening = false;
+                    voiceInputButton.style.background = "#6C63FF";
+                    voiceInputButton.textContent = "🎤";
+                    
+                    // Simulate voice input
+                    const voiceInputs = [
+                        "How can I improve my sleep quality?",
+                        "What are some healthy breakfast options?",
+                        "How much water should I drink daily?",
+                        "What exercises are good for beginners?",
+                        "How can I manage stress better?"
+                    ];
+                    
+                    const simulatedInput = voiceInputs[Math.floor(Math.random() * voiceInputs.length)];
+                    userInput.value = simulatedInput;
+                    appendMessage("user", simulatedInput);
+                    userInput.value = "";
+                    simulateBotResponse(simulatedInput);
+                }, 3000);
+                
+                appendMessage("bot", "🎤 Listening... Please speak now!");
+            }
+        });
+
+        // Auto-resize textarea
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 180) + 'px';
+        });
+    </script>
+</body>
+</html>
